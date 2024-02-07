@@ -193,9 +193,13 @@ func (s *upstart) Run() (err error) {
 	}
 
 	s.Option.funcSingle(optionRunWait, func() {
+		selfStop := s.i.ShouldStop(s)
 		var sigChan = make(chan os.Signal, 3)
 		signal.Notify(sigChan, syscall.SIGTERM, os.Interrupt)
-		<-sigChan
+		select {
+		case <-selfStop:
+		case <-sigChan:
+		}
 	})()
 
 	return s.i.Stop(s)
